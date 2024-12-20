@@ -21,15 +21,21 @@ read -r SERVER_IP
 echo "更新系统并安装Nginx..."
 sudo apt update && sudo apt install -y nginx
 
-# 下载新的Nginx配置文件
+# 下载新的Nginx配置文件前检查并删除旧文件
 NGINX_CONF_URL="https://raw.githubusercontent.com/rad168/iptv/refs/heads/main/mytv/nginx.conf"
 NGINX_CONF_PATH="/etc/nginx/nginx.conf"
+if [ -f "$NGINX_CONF_PATH" ]; then
+  echo "旧的Nginx配置文件已存在，正在备份..."
+  sudo mv "$NGINX_CONF_PATH" "${NGINX_CONF_PATH}.bak"
+fi
 echo "下载并替换Nginx配置文件..."
 curl -o "$NGINX_CONF_PATH" "$NGINX_CONF_URL"
 
-# 添加监听80端口的配置到http块内
-echo "配置Nginx监听80端口..."
-sed -i "/http {/a \\
+# 检查并添加监听80端口的配置到http块内
+echo "检查Nginx监听80端口的配置..."
+if ! grep -q "listen 80;" "$NGINX_CONF_PATH"; then
+  echo "配置Nginx监听80端口..."
+  sed -i "/http {/a \\
     server { \\
         listen 80; \\
         server_name $SERVER_IP; \\
@@ -43,14 +49,21 @@ sed -i "/http {/a \\
             allow all; \\
         } \\
     }" $NGINX_CONF_PATH
+else
+  echo "Nginx已经配置为监听80端口。"
+fi
 
 # 重启Nginx
 echo "重启Nginx服务..."
 sudo systemctl restart nginx
 
-# 下载并修改M3U文件
+# 下载并修改M3U文件前检查并删除旧文件
 M3U_URL="https://raw.githubusercontent.com/tmxk2021/CF-IPTV/refs/heads/main/mytv.m3u"
 M3U_PATH="/var/www/html/mytv.m3u"
+if [ -f "$M3U_PATH" ]; then
+  echo "旧的M3U文件已存在，正在备份..."
+  sudo mv "$M3U_PATH" "${M3U_PATH}.bak"
+fi
 echo "下载M3U文件..."
 curl -o "$M3U_PATH" "$M3U_URL"
 echo "修改M3U文件中的服务器IP和token..."
@@ -72,3 +85,4 @@ fi
 # 提供新的播放地址
 echo "部署完成！您的M3U播放地址为: http://$SERVER_IP/mytv.m3u"
 echo "您可以使用此地址观看直播。"
+
