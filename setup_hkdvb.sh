@@ -86,3 +86,7 @@ fi
 echo "部署完成！您的M3U播放地址为: http://$SERVER_IP/mytv.m3u"
 echo "您可以使用此地址观看直播。"
 
+# 赋予脚本执行权限
+echo "设置脚本执行权限..."
+chmod +x setup_hkdvb.sh
+
